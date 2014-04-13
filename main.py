@@ -49,26 +49,3 @@ if __name__ == '__main__':
 	
 	# Not gonna get here, but it's good practice
 	db.close()
-
-	"""while True:
-		while True:
-			addr = rfid.getaddr()
-			print
-			if addr:
-				print "Output: %s\nTimes Scanned: %s" % (addr, presses)
-				presses = 1
-				found = db.checkaddr(addr)
-				break
-			sleep(0.1)
-		if presses == 1:
-			if found:
-				motor.power(True)
-				# motor.open(num_rotations=3, rotation_precision=100, speed=0.15)
-				motor.open()
-				# Do stuff here
-				presses = 0
-				addr = None
-				sleep(2)
-				# motor.close(num_rotations=3, rotation_precision=90, speed=1)
-				motor.close()
-				motor.power(False)"""

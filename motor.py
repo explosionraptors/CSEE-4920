@@ -15,9 +15,10 @@ CW = True
 CCW = False
 
 class Motor(object):
-	def __init__(self, step_pin, dir_pin, rotation=CW):
+	def __init__(self, step_pin, dir_pin, power_pin, rotation=CW):
 		self.step_pin = step_pin
 		self.dir_pin = dir_pin
+		self.power_pin = power_pin
 		self.rotation = rotation
 		self.min_delay = 0.0005
 
@@ -27,7 +28,15 @@ class Motor(object):
 
 		gpio.setup(self.step_pin, gpio.OUT)
 		gpio.setup(self.dir_pin, gpio.OUT)
+		gpio.setup(self.power_pin, gpio.OUT)
 		gpio.output(self.dir_pin, self.rotation)
+
+	def power(self, on):
+		if type(on) != bool:
+			print "Error: invalid power configuration"
+		else:
+			gpio.output(self.power_pin, not on)
+
 
 	def set_rotation(self, rotation=CW):
 		self.rotation = rotation

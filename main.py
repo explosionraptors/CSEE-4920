@@ -2,7 +2,6 @@
 
 import RPi.GPIO as gpio
 from motor import Motor
-from button import Button
 import serial
 from time import sleep
 
@@ -17,12 +16,18 @@ def process_output(output):
 if __name__ == '__main__':
 	presses = 0
 
-	motor = Motor(step_pin=23, dir_pin=24)
+	motor = Motor(step_pin=23, dir_pin=24, power_pin=25)
 	#button = Button(pos_pin=17, neg_pin=22)
 
 	motor.setup()
 	#button.setup()
-	rfid = serial.Serial('/dev/ttyACM0', 9600)
+	loop = True
+	while loop:
+		try:
+			rfid = serial.Serial('/dev/ttyACM0', 9600)
+			loop = False
+		except OSError:
+			loop = True
 
 	while True:
 		while True:

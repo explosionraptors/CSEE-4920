@@ -21,24 +21,29 @@ class Motor(object):
 		self.power_pin = power_pin
 		self.rotation = rotation
 		self.min_delay = 0.0005
+		self.power_state = False
+		self.CW = CW
+		self.CCW = CCW
+
 
 	def setup(self):
 		gpio.setmode(gpio.BCM)
-		gpio.setwarnings(True)
-
+		gpio.setwarnings(False)
 		gpio.setup(self.step_pin, gpio.OUT)
 		gpio.setup(self.dir_pin, gpio.OUT)
 		gpio.setup(self.power_pin, gpio.OUT)
 		gpio.output(self.dir_pin, self.rotation)
+		gpio.output(self.power_pin, not self.power_state)
 
 	def power(self, on):
 		if type(on) != bool:
 			print "Error: invalid power configuration"
 		else:
-			gpio.output(self.power_pin, not on)
+			self.power_state = on
+			gpio.output(self.power_pin, not self.power_state)
 
 
-	def set_rotation(self, rotation=CW):
+	def __set_rotation(self, rotation=CW):
 		self.rotation = rotation
 		gpio.output(self.dir_pin, self.rotation)
 
@@ -56,6 +61,12 @@ class Motor(object):
 			self.step()
 			time.sleep(delay)
 
-	def open(self, num_rotations=1, rotation_precision=FULL, speed=1):
+	def open(self, num_rotations=3, rotation_precision=100, speed=0.15):
+		self.__set_rotation(self.CW)
+		for i in range(0, num_rotations):
+			self.rotate(num_steps=rotation_precision, speed=speed)
+
+	def close(self, num_rotations=3, rotation_precision=90, speed=1):
+		self.__set_rotation(self.CCW)
 		for i in range(0, num_rotations):
 			self.rotate(num_steps=rotation_precision, speed=speed)

@@ -9,8 +9,21 @@ class Rfid(object):
 
 	def setup(self):
 		# setup serial
-		self.rfid = serial.Serial('/dev/ttyAMA0', 9600)
-
+		loop = True
+		tries = 0
+		while loop:
+			try:
+				self.rfid = serial.Serial('/dev/ttyAMA0', 9600)
+				loop = False
+			except OSError:
+				tries += 1
+				print "OSError: while setting up RFID\nTry %s of 5..." % tries
+				if tries > 5:
+					print "Cannot setup RFID. Check hardware configuration... exiting"
+					exit(1)
+				else:
+					loop = True
+	
 	def __addrparse(self, addr):
 		temp = addr.rstrip()
 		idx = temp.find('\x02') + 1

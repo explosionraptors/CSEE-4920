@@ -2,60 +2,73 @@
 
 import RPi.GPIO as gpio
 from motor import Motor
-import serial
+from rfid import Rfid
+from database import Database
 from time import sleep
 
-whitelist = ['4800E534D7']
+# Database
+host = 'localhost'
 
-def process_output(output):
-	output_split = output.split()
-	addr_list = output_split[2:7]
-	addr = "".join(addr_list)
-	return addr
+# Power
+ON = True
+OFF = False
+
+# Entry
+ADDRESS = 0
+USERNAME = 1
 
 if __name__ == '__main__':
 	presses = 0
 
 	motor = Motor(step_pin=23, dir_pin=24, power_pin=25)
-	#button = Button(pos_pin=17, neg_pin=22)
-
 	motor.setup()
-	#button.setup()
-	loop = True
-	while loop:
-		try:
-			rfid = serial.Serial('/dev/ttyACM0', 9600)
-			loop = False
-		except OSError:
-			loop = True
 
+	rfid = Rfid()
+	rfid.setup()
+
+	db = Database(host, "philosoraptor", "explosion", "doorman")
+	db.setup()
+	
 	while True:
+		addr = rfid.getaddr()
+		if addr:
+			print "Address: %s" % addr
+			found, entry = db.checkaddr(addr)
+			# Found is the number of entries that occur with address
+			if found:
+				user = entry[USERNAME]	# if found > 1, this may log incorrect user. shouldnt happen.
+				motor.power(ON)
+				motor.open()
+				sleep(4)
+				motor.close()
+				motor.power(OFF)
+			else:
+				user = str()
+			db.loguser(addr, user)
+			addr = None	# should be unneccesary
+	
+	# Not gonna get here, but it's good practice
+	db.close()
+
+	"""while True:
 		while True:
-			rfid_output = rfid.readline()
-			if rfid_output:
-				print "Output: %s\nTimes Scanned: %s" % (rfid_output, presses)
+			addr = rfid.getaddr()
+			print
+			if addr:
+				print "Output: %s\nTimes Scanned: %s" % (addr, presses)
 				presses = 1
+				found = db.checkaddr(addr)
 				break
 			sleep(0.1)
 		if presses == 1:
-			addr = process_output(rfid_output)
-			if addr in whitelist:
-				motor.set_rotation(True)
-				motor.open(num_rotations=3, rotation_precision=100, speed=0.15)
+			if found:
+				motor.power(True)
+				# motor.open(num_rotations=3, rotation_precision=100, speed=0.15)
+				motor.open()
 				# Do stuff here
 				presses = 0
-				rfid_output = None
-				motor.set_rotation(False)
-				sleep(8)
-				motor.open(num_rotations=3, rotation_precision=90, speed=1)
-
-
-
-
-
-		#if button.press() == True:
-		#	presses += 1
-		#	if count == 1:
-		#		motor.step()
-		#else:
-		#	count = 0
+				addr = None
+				sleep(2)
+				# motor.close(num_rotations=3, rotation_precision=90, speed=1)
+				motor.close()
+				motor.power(False)"""

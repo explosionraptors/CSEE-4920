@@ -4,6 +4,7 @@ import RPi.GPIO as gpio
 from motor import Motor
 from rfid import Rfid
 from database import Database
+from led import Led
 from time import sleep
 
 # Database
@@ -28,14 +29,19 @@ if __name__ == '__main__':
 
 	db = Database(host, "philosoraptor", "explosion", "doorman")
 	db.setup()
+
+	ld = Led(red_pin=4, green_pin=17)
+	ld.setup()
 	
 	while True:
+		ld.setstate(ld.BOTH)
 		addr = rfid.getaddr()
 		if addr:
 			print "Address: %s" % addr
 			found, entry = db.checkaddr(addr)
 			# Found is the number of entries that occur with address
 			if found:
+				ld.setstate(ld.GREEN)
 				user = entry[USERNAME]	# if found > 1, this may log incorrect user. shouldnt happen.
 				motor.power(ON)
 				motor.open()
@@ -43,9 +49,12 @@ if __name__ == '__main__':
 				motor.close()
 				motor.power(OFF)
 			else:
+				ld.setstate(ld.RED)
 				user = str()
+				sleep(2)	# make illegal user wait
 			db.loguser(addr, user)
 			addr = None	# should be unneccesary
 	
 	# Not gonna get here, but it's good practice
 	db.close()
+	ld.setstate(ld.OFF)

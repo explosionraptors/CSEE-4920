@@ -5,6 +5,7 @@ from motor import Motor
 from rfid import Rfid
 from database import Database
 from led import Led
+from encoder import Encoder
 from time import sleep
 
 # Database
@@ -19,34 +20,50 @@ ADDRESS = 0
 USERNAME = 1
 
 if __name__ == '__main__':
-	presses = 0
-
-	motor = Motor(step_pin=23, dir_pin=24, power_pin=25)
+    # Components
+	ld = Led(red_pin=4, green_pin=17)
+	ld.setup()
+    
+    motor = Motor(step_pin=23, dir_pin=24, power_pin=25)
 	motor.setup()
 
-	rfid = Rfid()
-	rfid.setup()
+    encoder = Encoder(clk_pin=22, dir_pin=27)
+    encoder.setup()
 
 	db = Database(host, "philosoraptor", "explosion", "doorman")
 	db.setup()
 
-	ld = Led(red_pin=4, green_pin=17)
-	ld.setup()
-	
+	rfid = Rfid()
+	rfid.setup()
+
+    # Main Loop
 	while True:
 		ld.setstate(ld.BOTH)
 		addr = rfid.getaddr()
 		if addr:
-			print "Address: %s" % addr
+			#print "Address: %s" % addr
 			found, entry = db.checkaddr(addr)
 			# Found is the number of entries that occur with address
 			if found:
 				ld.setstate(ld.GREEN)
 				user = entry[USERNAME]	# if found > 1, this may log incorrect user. shouldnt happen.
 				motor.power(ON)
-				motor.open()
-				sleep(4)
-				motor.close()
+                # Hardcoded
+                # motor.open()
+                
+                turning = True
+                while turning:
+                    p0 = encoder.getpulses()
+                    motor.rotate(num_steps=50, speed=0.2)
+                    motor.steps += 50
+                    p1 = encoder.getpulses()
+                    if (p1 - p0) < # clk pulses equivalent to 50 steps
+                        turning = False
+                
+				sleep(4)    # delay between release
+                
+                steps = motor.steps - 50    # always release less than we take
+                motor.close(num_rotations=1, rotation_precision=steps)
 				motor.power(OFF)
 			else:
 				ld.setstate(ld.RED)

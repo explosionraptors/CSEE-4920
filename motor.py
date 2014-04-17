@@ -22,6 +22,7 @@ class Motor(object):
 		self.rotation = rotation
 		self.min_delay = 0.0005
 		self.power_state = False
+        self.steps = 0
 		self.CW = CW
 		self.CCW = CCW
 
@@ -36,6 +37,7 @@ class Motor(object):
 		gpio.output(self.power_pin, not self.power_state)
 
 	def power(self, on):
+        self.steps = 0
 		if type(on) != bool:
 			print "Error: invalid power configuration"
 		else:

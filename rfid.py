@@ -14,6 +14,7 @@ class Rfid(object):
 		while loop:
 			try:
 				self.rfid = serial.Serial('/dev/ttyAMA0', 9600)
+				#print "Rfid Setup: Pass"
 				loop = False
 			except OSError:
 				tries += 1
@@ -25,6 +26,9 @@ class Rfid(object):
 					loop = True
 	
 	def __addrparse(self, addr):
+		address = None
+		checksum = None
+
 		temp = addr.rstrip()
 		idx = temp.find('\x02') + 1
 		if idx == 0:
@@ -36,8 +40,7 @@ class Rfid(object):
 			address = addrchk[0:10]
 			checksum = addrchk[10:12]
 		else:
-			print "Error: We have an issue that needs immediate fixing"
-
+			print "Error: We have an issue that needs immediate fixing: %s %s" % (addrchk, alen) 
 		return address, checksum
 
 	def getaddr(self):

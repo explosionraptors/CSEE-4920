@@ -2,7 +2,7 @@
 
 import MySQLdb
 
-tables = dict(authkeys="(address TEXT, user TEXT)", userlog="(tdate DATE, ttime TIME, address TEXT, user TEXT)")
+tables = dict(authkeys="(address TEXT, user TEXT)", userlog="(dateandtime DATETIME, address TEXT, user TEXT)")
 
 class Database(object):
 	def __init__(self, host, username, password, rootdb):
@@ -22,7 +22,7 @@ class Database(object):
 			return False
 
 		try:
-			self.curs.execute("insert into userlog values(CURRENT_DATE(), NOW(), '%s', '%s')" % (address, user))
+			self.curs.execute("insert into userlog values(NOW(), '%s')" % (address))
 			self.db.commit()
 			return True # check call outputs
 		except:
@@ -55,10 +55,11 @@ class Database(object):
 
 	def checkaddr(self, address):
 		found = self.curs.execute("select * from authkeys where address='%s'" % address)
+		print "Found %s" % found
 		entry = self.curs.fetchall()
 		if found:
 			entry = entry[0]
-		return (found, entry)
+		return found, entry
 
 	def cleardb(self, dbname):	# STUB
 		fields = tables.get(dbname)

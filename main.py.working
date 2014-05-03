@@ -1,0 +1,96 @@
+#!/usr/bin/python
+
+import RPi.GPIO as gpio
+from motor import Motor
+from rfid import Rfid
+#from database import Database
+from phpdb import Phpdb
+from led import Led
+from encoder import Encoder
+from time import sleep
+
+# Database
+host = 'localhost'
+
+# Power
+ON = True
+OFF = False
+
+# Entry
+ADDRESS = 0
+USERNAME = 1
+
+if __name__ == '__main__':
+    	# Components
+	ld = Led(red_pin=4, green_pin=17)
+	ld.setup()
+    
+	motor = Motor(step_pin=23, dir_pin=24, power_pin=25)
+	motor.setup()
+
+	encoder = Encoder(clk_pin=22, dir_pin=27)
+	encoder.setup()
+
+	#db = Database(host, "philosoraptor", "explosion", "doorman")
+	#db.setup()
+
+	pdb = Phpdb()
+	pdb.setup()	# Pass
+
+	rfid = Rfid()
+	rfid.setup()
+
+    # Main Loop
+	while True:
+		ld.setstate(ld.BOTH)
+		addr = rfid.getaddr()
+		#addr = raw_input('Some address --->')
+		#if addr == "yes":
+		#	addr = '4800e534d7'
+
+		if addr:
+			print "Address: %s" % addr
+			#found, entry = db.checkaddr(addr)
+			found = pdb.checkaddr(addr)
+			# Found is the number of entries that occur with address
+			if found:
+				ld.setstate(ld.GREEN)
+				#user = entry[USERNAME]	# if found > 1, this may log incorrect user. shouldnt happen.
+				motor.power(ON)
+                		# Hardcoded
+                		# motor.open()
+                
+				
+				motor.open(num_rotations=1, rotation_precision=10)
+                		turning = True
+                		#while not gpio.event_detected(encoder.dir_pin):
+				d = gpio.input(encoder.dir_pin)
+                    		while turning:
+					#p0 = encoder.getpulses()
+					motor.open(num_rotations=1, rotation_precision=50)
+                    			#motor.rotate(num_steps=50, speed=0.2)
+					if d != gpio.input(encoder.dir_pin):
+						turning = False
+                    			#p1 = encoder.getpulses()
+					#p = p1 - p0
+                    			#if p < 10 or p > 40:	# clk pulses equivalent to 50 steps
+                        		#	turning = False
+					#else:
+					#	print "%s : %s" % (p1-p0, gpio.input(encoder.dir_pin))                
+
+				sleep(4)    # delay between release
+                
+                		steps = motor.steps - 50    # always release less than we take
+                		motor.close(num_rotations=1, rotation_precision=steps)
+				motor.power(OFF)
+		    	else:
+				ld.setstate(ld.RED)
+				#user = str()
+				sleep(2)	# make illegal user wait
+		    	#db.loguser(addr, user)
+		    	pdb.loguser(addr)
+			addr = None	# should be unneccesary
+	
+	# Not gonna get here, but it's good practice
+	db.close()
+	ld.setstate(ld.OFF)

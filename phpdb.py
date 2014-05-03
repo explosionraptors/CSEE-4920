@@ -26,6 +26,6 @@ class Phpdb(object):
 			return None
 
 		if address in r.json():
-			return True
+			return True, r.json()
 		else:
-			return False
+			return False, r.json()
